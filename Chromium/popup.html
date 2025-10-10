@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings Toggle Panel</title>
+    <link rel="stylesheet" href="popup.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="logo.png">
+            <h1>Cydog Toolkit</h1>
+        </header>
+        
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="general">Security</button>
+            <button class="tab-btn" data-tab="privacy">Privacy</button>
+            <!--<button class="tab-btn" data-tab="notifications">Notifications</button>-->
+        </div>
+        
+        <div class="tab-content active" id="general">
+            <h2 class="section-title">Security Settings</h2>
+            <div class="toggle-container">
+                <div class="toggle-item">
+                    <label class="toggle-label">
+                        <span class="toggle-icon"><i class="fa-solid fa-lock"></i></span>
+                        <div class="toggle-text">
+                            <h3>HTTPSecure</h3>
+                            <p>Enable HTTPS only</p>
+                        </div>
+                        <span class="toggle-switch">
+                            <input type="checkbox"id="automatic-toggle">
+                            <span class="slider"></span>
+                        </span>
+                    </label>
+                </div>
+                
+                <div class="toggle-item">
+                    <label class="toggle-label">
+                        <span class="toggle-icon"><i class="fa-solid fa-shield-dog"></i></span>
+                        <div class="toggle-text">
+                            <h3>Ultra Security</h3>
+                            <p>Enable ultra security browsing</p>
+                        </div>
+                        <span class="toggle-switch">
+                            <input type="checkbox"id="automatic-toggle2">
+                            <span class="slider"></span>
+                        </span>
+                    </label>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="tab-content" id="privacy">
+            <h2 class="section-title">Privacy Settings</h2>
+            <div class="toggle-container">
+                <div class="toggle-item">
+                    <label class="toggle-label">
+                        <span class="toggle-icon"><i class="fa-solid fa-cube"></i></span>
+                        <div class="toggle-text">
+                            <h3>Block WebGL</h3>
+                            <p>Disable WebGL via canvas</p>
+                        </div>
+                        <span class="toggle-switch">
+                            <input type="checkbox"id="automatic-toggle3">
+                            <span class="slider"></span>
+                        </span>
+                    </label>
+                </div>
+                
+                <div class="toggle-item">
+                    <label class="toggle-label">
+                        <span class="toggle-icon"><i class="fa-solid fa-satellite-dish"></i></span>
+                        <div class="toggle-text">
+                            <h3>Block Beacons</h3>
+                            <p>Disable pixel techniques</p>
+                        </div>
+                        <span class="toggle-switch">
+                            <input type="checkbox"id="automatic-toggle4">
+                            <span class="slider"></span>
+                        </span>
+                    </label>
+                </div>
+
+                <!--TODO - Add more privacy features -->
+                <!--<div class="toggle-item">
+                    <label class="toggle-label">
+                        <span class="toggle-icon"><i class="fa-solid fa-satellite-dish"></i></span>
+                        <div class="toggle-text">
+                            <h3></h3>
+                            <p></p>
+                        </div>
+                        <span class="toggle-switch">
+                            <input type="checkbox"id="automatic-toggle5">
+                            <span class="slider"></span>
+                        </span>
+                    </label>
+                </div>-->
+                
+            </div>
+        </div>
+        
+        <!--TODO - Add notifications -->
+        <!--<div class="tab-content" id="notifications">
+            <h2 class="section-title"><i class="fas fa-bell"></i> Notification Settings</h2>
+            <div class="toggle-container">
+            </div>
+        </div>-->
+        
+        <footer>
+            <p>Cydog Browser Extension v1.1.6</p>
+        </footer>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>
