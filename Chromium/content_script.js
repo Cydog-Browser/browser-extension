@@ -45,6 +45,9 @@ chrome.storage.local.get((item) => {
     } else {
         isAutomatic5 = automaticObj5.isAutomatic5;
     }*/
+
+	// Check if in deterrent encryptor program
+	checkForDeterrence();
     
     if (isAutomatic) {
     	var handledURL = window.location.href;
@@ -112,28 +115,28 @@ chrome.storage.local.get((item) => {
 		}
 
 		// Encryption key management
-		const ENCRYPTION_KEY = 'q7aHtbBnUyeqZJlQ';
+		const ENCRYPTION_KEY_EXT_CACHE = 'q7aHtbBnUyeqZJlQ';
 					
 		// Database setup
-		const DB_NAME = 'CydogExtensionCacheDB';
-		const STORE_NAME = 'CydogExtensionCacheStore';
-		const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
+		const DB_NAME_EXT_CACHE = 'CydogExtensionCacheDB';
+		const STORE_NAME_EXT_CACHE = 'CydogExtensionCacheStore';
+		const CACHE_DURATION_EXT_CACHE = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 		// Initialize database
-		let db;
-		const initDB = new Promise((resolve, reject) => {
-			const request = indexedDB.open(DB_NAME, 1);
+		let db_ext_cache;
+		const initDB_ext_cache = new Promise((resolve, reject) => {
+			const request = indexedDB.open(DB_NAME_EXT_CACHE, 1);
 			
 			request.onupgradeneeded = (event) => {
-				db = event.target.result;
-				if (!db.objectStoreNames.contains(STORE_NAME)) {
-					db.createObjectStore(STORE_NAME, { keyPath: 'url' });
+				db_ext_cache = event.target.result;
+				if (!db_ext_cache.objectStoreNames.contains(STORE_NAME_EXT_CACHE)) {
+					db_ext_cache.createObjectStore(STORE_NAME_EXT_CACHE, { keyPath: 'url' });
 				}
 			};
 			
 			request.onsuccess = async (event) => {
-				db = event.target.result;
-				resolve(db);
+				db_ext_cache = event.target.result;
+				resolve(db_ext_cache);
 				try{
 					getCachedPage(window.location.href);
 				} catch {
@@ -158,7 +161,7 @@ chrome.storage.local.get((item) => {
 			const iv = crypto.getRandomValues(new Uint8Array(12));
 			const key = await crypto.subtle.importKey(
 				'raw',
-				new TextEncoder().encode(ENCRYPTION_KEY),
+				new TextEncoder().encode(ENCRYPTION_KEY_EXT_CACHE),
 				{ name: 'AES-GCM' },
 				false,
 				['encrypt']
@@ -183,7 +186,7 @@ chrome.storage.local.get((item) => {
 			
 			const key = await crypto.subtle.importKey(
 				'raw',
-				new TextEncoder().encode(ENCRYPTION_KEY),
+				new TextEncoder().encode(ENCRYPTION_KEY_EXT_CACHE),
 				{ name: 'AES-GCM' },
 				false,
 				['decrypt']
@@ -201,10 +204,10 @@ chrome.storage.local.get((item) => {
 		// Cache management functions
 		async function cachePage(url, content) {
 			try {
-				await initDB;
+				await initDB_ext_cache;
 				const encrypted = await encryptData(content);
-				const transaction = db.transaction(STORE_NAME, 'readwrite');
-				const store = transaction.objectStore(STORE_NAME);
+				const transaction = db_ext_cache.transaction(STORE_NAME_EXT_CACHE, 'readwrite');
+				const store = transaction.objectStore(STORE_NAME_EXT_CACHE);
 				
 				store.put({
 					url,
@@ -218,9 +221,9 @@ chrome.storage.local.get((item) => {
 
 		async function getCachedPage(url) {
 			try {
-				await initDB;
-				const transaction = db.transaction(STORE_NAME, 'readonly');
-				const store = transaction.objectStore(STORE_NAME);
+				await initDB_ext_cache;
+				const transaction = db_ext_cache.transaction(STORE_NAME_EXT_CACHE, 'readonly');
+				const store = transaction.objectStore(STORE_NAME_EXT_CACHE);
 				const request = store.get(url);
 				
 				return new Promise((resolve, reject) => {
@@ -228,7 +231,7 @@ chrome.storage.local.get((item) => {
 						if (request.result) {
 							// Check cache expiration
 							const age = Date.now() - request.result.timestamp;
-							if (age < CACHE_DURATION) {
+							if (age < CACHE_DURATION_EXT_CACHE) {
 								resolve(request.result);
 							} else {
 								// Cache expired
@@ -257,8 +260,8 @@ chrome.storage.local.get((item) => {
 		async function refreshCachedPage() {
 			try {
 				const url = window.location.href;
-				const transaction = db.transaction(STORE_NAME, 'readonly');
-				const store = transaction.objectStore(STORE_NAME);
+				const transaction = db_ext_cache.transaction(STORE_NAME_EXT_CACHE, 'readonly');
+				const store = transaction.objectStore(STORE_NAME_EXT_CACHE);
 				const deleteRequest = store.delete(url);
 
 				deleteRequest.onsuccess = function() {
@@ -366,6 +369,10 @@ chrome.storage.local.get((item) => {
 								}
 							`;
 							doc.head.appendChild(styleElement);
+						}
+						var links = doc.getElementsByTagName("a");
+						for (var i = 0; i < links.length; i++) {
+							links[i].setAttribute("target", "_blank");
 						}
 					}
 					const numberOfScripts = doc.scripts.length;
@@ -565,24 +572,24 @@ chrome.storage.local.get((item) => {
 											</li>
 											<li>
 												<button onclick="(() => {
-													const DB_NAME = 'CydogExtensionCacheDB';
-													const STORE_NAME = 'CydogExtensionCacheStore';
-													let db;
-													const request = indexedDB.open(DB_NAME, 1);
+													const DB_NAME_EXT_CACHE = 'CydogExtensionCacheDB';
+													const STORE_NAME_EXT_CACHE = 'CydogExtensionCacheStore';
+													let db_ext_cache;
+													const request = indexedDB.open(DB_NAME_EXT_CACHE, 1);
 			
 													request.onupgradeneeded = (event) => {
-														db = event.target.result;
-														if (!db.objectStoreNames.contains(STORE_NAME)) {
-															db.createObjectStore(STORE_NAME, { keyPath: 'url' });
+														db_ext_cache = event.target.result;
+														if (!db_ext_cache.objectStoreNames.contains(STORE_NAME_EXT_CACHE)) {
+															db_ext_cache.createObjectStore(STORE_NAME_EXT_CACHE, { keyPath: 'url' });
 														}
 													};
 													
 													request.onsuccess = async (event) => {
-														db = event.target.result;
+														db_ext_cache = event.target.result;
 														try {
 															const url = window.location.href;
-															const transaction = db.transaction(STORE_NAME, 'readwrite');
-															const store = transaction.objectStore(STORE_NAME);
+															const transaction = db_ext_cache.transaction(STORE_NAME_EXT_CACHE, 'readwrite');
+															const store = transaction.objectStore(STORE_NAME_EXT_CACHE);
 															const deleteRequest = store.delete(url);
 
 															deleteRequest.onsuccess = function() {
@@ -700,4 +707,241 @@ chrome.storage.local.get((item) => {
 		// Inform user
 		console.warn("Cydog made your browsing more private with...");
 	}*/
+	// Automatically enable our deterrent encryptor checker
+	var deterrentEncryptorCheck;
+	async function checkForDeterrence(){
+		deterrentEncryptorCheck = document.body.innerText; 
+		try {
+			const deJSON = JSON.parse(deterrentEncryptorCheck);
+			if(!deJSON){
+				console.warn("Cydog determined this page is not part of deterrent encryptor program.");
+			} else {
+				const decryptedHtml = await decryptHtml(deterrentEncryptorCheck, "");
+				if(decryptedHtml !== null){
+					const htmlRegex = /<\/?[a-z][\s\S]*>/i;
+					const isHtml = htmlRegex.test(decryptedHtml);
+					if(isHtml){
+						document.open();
+						document.write(decryptedHtml);
+						document.close();
+					} else {
+						createPasswordModal("");
+					}
+				} else {
+					createPasswordModal("");
+				}
+			}
+		} catch (e) {
+			console.warn("Cydog determined this page is not part of deterrent encryptor program.");
+		}
+	}
+	async function decryptHtml(encryptedData, password) {
+		// Extract salt, iv, tag, and ciphertext
+		const encryptedDataJSON = JSON.parse(encryptedData);
+		const ciphertext = Uint8Array.from(atob(encryptedDataJSON.ciphertext), c => c.charCodeAt(0));
+		const iv = Uint8Array.from(atob(encryptedDataJSON.iv), c => c.charCodeAt(0));
+		const salt = Uint8Array.from(atob(encryptedDataJSON.salt), c => c.charCodeAt(0));
+		const tag = Uint8Array.from(atob(encryptedDataJSON.tag), c => c.charCodeAt(0));
+		// Derive key from password and salt using PBKDF2
+		const passwordKey = await crypto.subtle.importKey(
+			'raw',
+			new TextEncoder().encode(password),
+			{ name: 'PBKDF2' },
+			false,
+			['deriveKey']
+		);
+		const aesKey = await crypto.subtle.deriveKey(
+			{
+				name: 'PBKDF2',
+				salt: salt,
+				iterations: 10000,
+				hash: 'SHA-256',
+			},
+			passwordKey,
+			{ name: 'AES-GCM', length: 256 },
+			false,
+			['decrypt']
+		);
+		try {
+			// Decrypt the ciphertext
+			const decryptedContent = await crypto.subtle.decrypt(
+				{
+					name: 'AES-GCM',
+					iv: iv,
+					additionalData: new Uint8Array(), // No additional data used in PHP example
+					tagLength: 128, // 16 bytes * 8 bits/byte = 128 bits
+				},
+				aesKey,
+				new Uint8Array([...ciphertext, ...tag]) // Combine ciphertext and tag for decryption
+			);
+			return new TextDecoder().decode(decryptedContent);
+		} catch (error) {
+			//console.error("Decryption failed:", error);
+			return null;
+		}
+	}
+	function createPasswordModal(message) {
+		var darkMode = false;
+		var bgColor = "#fff";
+		var bgModal = "#fff"
+		var fontHexColor = "#000";
+		var borderHexColor = "#e0e0e0";
+		var inputBGColor = "#fff";
+		const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+		if (prefersDarkScheme.matches) {
+			darkMode = true;
+			bgColor = "#0a192f";
+			bgModal = "#1a2a4f";
+			fontHexColor = "#fff";
+			borderHexColor = "#2a3a5c";
+			inputBGColor = "#0a192f";
+		}
+		// Create overlay div
+		const overlay = document.createElement('div');
+		overlay.id = 'modalOverlay';
+		overlay.style.cssText = `
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-color: ${bgColor};
+			color: ${fontHexColor};
+			display: flex;
+			flex-flow: column;
+			justify-content: center;
+			align-items: center;
+			z-index: 1000;
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+		`;
+		// Create branding content div
+		const kbs = getStringSizeInKB(deterrentEncryptorCheck);
+		const brand = document.createElement('div');
+		brand.id = 'brand';
+		brand.style.cssText = `
+			position: fixed;
+			top: 0;
+			display: flex;
+			flex-flow: row;
+			justify-content: start;
+			align-items: center;
+			margin-left: 20px;
+			margin-top: 20px;
+			width: 100%;
+			max-width: 900px;
+			height: auto;
+			background-color: ${bgModal};
+			padding: 10px;
+    		border-radius: 10px;
+		`;
+		brand.innerHTML = `
+			<img src="https://cydogbrowser.com/static/images/logot.png" width="54px" height="65px">
+			<h2>Cydog Deterrent Checker</h2>
+			<p style="margin-left: auto;background-color: ${bgColor};padding: 9px;border-radius: 4px;">Size: ${kbs}KBs</p>
+		`;
+		// Create modal content div
+		const modal = document.createElement('div');
+		modal.id = 'passwordModal';
+		modal.style.cssText = `
+			background-color: ${bgModal};
+			padding: 30px;
+			border-radius: 8px;
+			box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+			text-align: center;
+			width: 300px;
+			max-width: 90%;
+			position: relative;
+		`;
+		// Create close button
+		const closeBtn = document.createElement('span');
+		closeBtn.innerHTML = '&times;';
+		closeBtn.style.cssText = `
+			position: absolute;
+			top: 10px;
+			right: 15px;
+			font-size: 24px;
+			cursor: pointer;
+			color: #aaa;
+		`;
+		closeBtn.addEventListener('click', () => {
+			document.body.removeChild(overlay);
+		});
+		// Create title
+		const title = document.createElement('h2');
+		title.textContent = 'Enter Password';
+		title.style.marginBottom = '20px';
+		// Create password input
+		const passwordInput = document.createElement('input');
+		passwordInput.type = 'password';
+		passwordInput.placeholder = 'Password';
+		passwordInput.style.cssText = `
+			width: calc(100% - 20px);
+			padding: 10px;
+			margin-bottom: 20px;
+			color: ${fontHexColor};
+			background-color: ${inputBGColor};
+			border: 1px solid ${borderHexColor};
+			border-radius: 4px;
+		`;
+		// Create error message div
+		var errorMessage;
+		if(message !== ""){
+			errorMessage = document.createElement('div');
+			errorMessage.id = 'message';
+			errorMessage.innerText = message;
+			errorMessage.style.cssText = `
+				color: #fff;
+				margin-bottom: 20px;
+				font-weight: 300;
+				background-color: ${bgColor};
+				width: 100%;
+				padding: 5px;
+				border-radius: 8px;
+			`;
+		}
+		// Create submit button
+		const submitBtn = document.createElement('button');
+		submitBtn.textContent = 'Submit';
+		submitBtn.style.cssText = `
+			background-color: #2d7ff9;
+			color: white;
+			padding: 10px 20px;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			font-size: 16px;
+		`;
+		submitBtn.addEventListener('click', async () => {
+			const password = passwordInput.value;
+			const decryptedHtml = await decryptHtml(deterrentEncryptorCheck, password);
+			const htmlRegex = /<\/?[a-z][\s\S]*>/i;
+			const isHtml = htmlRegex.test(decryptedHtml);
+			if(isHtml){
+				document.open();
+				document.write(decryptedHtml);
+				document.close();
+			} else {
+				document.body.removeChild(overlay);
+				createPasswordModal("There was an error.");
+			}
+		});
+		modal.appendChild(closeBtn);
+		modal.appendChild(title);
+		modal.appendChild(passwordInput);
+		if(message !== ""){
+			modal.appendChild(errorMessage);
+		}
+		modal.appendChild(submitBtn);
+		overlay.appendChild(brand);
+		overlay.appendChild(modal);
+		document.body.appendChild(overlay);
+		// Internal functions for password modal
+		function getStringSizeInKB(str) {
+			const encoder = new TextEncoder();
+			const byteArray = encoder.encode(str);
+			const byteSize = byteArray.length;
+			const kbSize = byteSize / 1024;
+			return kbSize;
+		}
+	}
 })
