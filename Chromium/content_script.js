@@ -1,12 +1,13 @@
 // content_script.js - Cydog Browser Browser Extension
 // https://cydogbrowser.com
 // Cydog is here to help. Our ultra security browsing mode now leverages our cy-cache.js available at https://github.com/Cydog-Browser/cy-cache-js
-
+var fingerprintActual = "";
 var isAutomatic = true;
 var isAutomatic2 = true;
 var isAutomatic3 = true;
 var isAutomatic4 = true;
-//var isAutomatic5 = true;
+var isAutomatic5 = true;
+var isAutomatic6 = true;
 
 chrome.storage.local.get((item) => {
 
@@ -14,7 +15,8 @@ chrome.storage.local.get((item) => {
     var automaticObj2 = item.automaticObj2;
 	var automaticObj3 = item.automaticObj3;
 	var automaticObj4 = item.automaticObj4;
-	//var automaticObj5 = item.automaticObj5;
+	var automaticObj5 = item.automaticObj5;
+	var automaticObj6 = item.automaticObj6;
 
     if (automaticObj == undefined) {
         isAutomatic = true;
@@ -40,14 +42,34 @@ chrome.storage.local.get((item) => {
         isAutomatic4 = automaticObj4.isAutomatic4;
     }
 
-	/*if (automaticObj5 == undefined) {
+	if (automaticObj5 == undefined) {
         isAutomatic5 = true;
     } else {
         isAutomatic5 = automaticObj5.isAutomatic5;
-    }*/
+    }
+
+	if (automaticObj6 == undefined) {
+        isAutomatic6 = true;
+    } else {
+        isAutomatic6 = automaticObj6.isAutomatic6;
+    }
 
 	// Check if in deterrent encryptor program
 	checkForDeterrence();
+
+	new Fingerprint2().get(function(result, components){
+		if(item.fingerprint !== result){
+			showToast("Fingerprint changed.");
+		}
+		fingerprintActual = result;
+		chrome.storage.local.set({'fingerprint': fingerprintActual}, function() {
+			if (chrome.runtime.lastError) {
+			  console.error("Cydog failed to calculate your fingerprint:", chrome.runtime.lastError.message);
+			} else {
+			  console.warn('Cydog calculated your fingerprint.');
+			}
+		});
+	});
     
     if (isAutomatic) {
     	var handledURL = window.location.href;
@@ -414,7 +436,6 @@ chrome.storage.local.get((item) => {
 										overflow: hidden;
 										font-family: 'Segoe UI', system-ui, sans-serif;
 										line-height: 1.6;
-										overflow-x: hidden;
 										background-color: var(--bg-primary);
 										color: var(--text-primary);
 									}
@@ -451,6 +472,7 @@ chrome.storage.local.get((item) => {
 									.search-container {
 										margin-left: auto;
 										width: 50%;
+										max-width: 500px;
 										background-color: var(--bg-primary);
 										color: var(--text-primary);
 										border-radius: 16px;
@@ -617,21 +639,22 @@ chrome.storage.local.get((item) => {
 										</ul>
 									</div>
 									<div class="main-content">
-										<iframe id="cydog-cache" sandbox="allow-scripts allow-popups allow-forms allow-same-origin"></iframe>
+										<iframe id="cydog-cache"></iframe>
 									</div>
 								</div>
 							</body>
 						</html>`);
 					document.close();
 					const cydogCache = document.getElementById('cydog-cache');
-					//cydogCache.srcdoc = decryptedContent;
-					const iframeDocument = cydogCache.contentWindow.document;
-					iframeDocument.open();
-					iframeDocument.write(doc.documentElement.outerHTML);
-					iframeDocument.close();
+					cydogCache.srcdoc = doc.documentElement.outerHTML;
+					//const iframeDocument = cydogCache.contentWindow.document;
+					//iframeDocument.open();
+					//iframeDocument.write(doc.documentElement.outerHTML);
+					//iframeDocument.close();
 					const newState = { page: 'cydog-cache', pageId: Math.random() };
 					history.pushState(newState, document.title, url);
 					console.warn("Cydog served cache with cycache.js through DB.");
+					showToast("Cache rendered.");
 				} 
 			} catch (error) {
 				console.warn("Cydog could not serve cache due to malformed URL.");
@@ -700,39 +723,166 @@ chrome.storage.local.get((item) => {
         // Inform user
 		console.warn("Cydog made your browsing more private with beacon blocking.");
 	}
-	/*if (isAutomatic5) {
-
-		// TODO - Add more privacy features here...
-
-		// Inform user
-		console.warn("Cydog made your browsing more private with...");
-	}*/
+	if (isAutomatic5) {
+		conductHREFChanges();
+	}
+	if (isAutomatic6 && !isAutomatic5) {
+		conductHREFChanges();
+	}
+	function conductHREFChanges(){
+		window.onload = function() {
+			var domainListAA;
+			var domainListAB;
+			var domainListAC;
+			var counter = 0;
+			document.querySelectorAll('a[href]').forEach(link => {
+				if (location.hostname !== new URL(link.href).hostname) {
+					if (isAutomatic5) {
+						link.setAttribute('target', '_blank');
+						link.setAttribute('rel', 'noopener noreferrer nofollow');
+					}
+					link.addEventListener('mouseenter', async function() {
+						const linkDiv = document.createElement("div");
+						linkDiv.id = `cydog-toolkit-${counter}`;
+						linkDiv.innerHTML += `<p>${link.href}</p>`;
+						linkDiv.style.display = 'block'; 
+						var bgColor = "#fff";
+						var fontHexColor = "#000";
+						var borderHexColor = "#e0e0e0";
+						const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+						if (prefersDarkScheme.matches) {
+							bgColor = "#0a192f";
+							fontHexColor = "#fff";
+							borderHexColor = "#2a3a5c";
+						}
+						linkDiv.style.cssText = `
+							position: fixed;
+							top: 0;
+							left: 0;
+							width: auto;
+							height: auto;
+							background-color: ${bgColor};
+							color: ${fontHexColor};
+							padding: 8px 12px;
+							border-radius: 4px;
+							border: 1px solid ${borderHexColor};
+							font-size: 14px;
+							z-index: 1000;
+							transform: none;
+							word-break: break-all;
+						`;
+						const targetRect = link.getBoundingClientRect();
+						linkDiv.style.position = 'absolute';
+						linkDiv.style.top = (targetRect.bottom + window.scrollY + 5) + 'px';
+						linkDiv.style.left = (targetRect.left + window.scrollX) + 'px';
+						link.addEventListener('mouseleave', function() {
+							linkDiv.remove();
+							const cydogTooltips = document.querySelectorAll(`[id^='cydog-toolkit-']`);
+							cydogTooltips.forEach(cydogtooltip => {
+								cydogtooltip.remove();
+							});
+						});
+						if (isAutomatic6) {
+							try {
+								if(domainListAA !== undefined && domainListAB !== undefined && domainListAC !== undefined){
+									const urlObject = new URL(link.href);
+									const domain = urlObject.hostname;;
+									if (domainListAA.toString().includes(domain) || domainListAB.toString().includes(domain) || domainListAC.toString().includes(domain)) {
+										linkDiv.innerHTML += renderWarning(domain);
+									} else {
+										linkDiv.innerHTML += renderNotListed();
+									}
+								} else {
+									const response = await fetch('https://raw.githubusercontent.com/mdbench/malicious-domains/refs/heads/main/full-domains-aa.txt');
+									if (!response.ok) {
+										throw new Error(`Cydog could not get domains list response.`);
+									}
+									const text = await response.text();
+									domainListAA = text.toString();
+									const response2 = await fetch('https://raw.githubusercontent.com/mdbench/malicious-domains/refs/heads/main/full-domains-ab.txt');
+									if (!response2.ok) {
+										throw new Error(`Cydog could not get domains list response.`);
+									}
+									const text2 = await response2.text();
+									domainListAB = text2.toString();
+									const response3 = await fetch('https://raw.githubusercontent.com/mdbench/malicious-domains/refs/heads/main/full-domains-ac.txt');
+									if (!response3.ok) {
+										throw new Error(`Cydog could not get domains list response.`);
+									}
+									const text3 = await response3.text();
+									domainListAC = text3.toString();
+									const urlObject = new URL(link.href);
+									const domain = urlObject.hostname;
+									if (text.toString().includes(domain) || text2.toString().includes(domain) || text3.toString().includes(domain)) {
+										linkDiv.innerHTML += renderWarning(domain);
+									} else {
+										linkDiv.innerHTML += renderNotListed();
+									}
+								}
+							} catch (error) {
+								console.error(`Cydog was unable to check domain:`, error);
+							}
+							function renderNotListed(){
+								return `
+									<p>✓ Not listed on <a href="https://github.com/romainmarcoux/malicious-domains" target="_blank">romainmarcoux's malicious list</a></p>
+								`;
+							}
+							function renderWarning(domain){
+								return `
+									<p>⚠ Warning a partial match was listed on <a href="https://github.com/romainmarcoux/malicious-domains" target="_blank">romainmarcoux's malicious list</a>.</p>
+									<p>You should be careful when visiting pages like this one, as versions of this domain are being actively attacked in the wild.</p>
+									<p>Here are some variants to be on the lookout for:</p>
+										<ul style="margin-bottom:20px;list-style:none;">
+											<li>-${domain}</li>
+											<li>.[blended text]-${domain}</li>
+											<li>[blended text].[more blended text]-${domain}</li>
+										</ul>
+								`;
+							}
+							document.body.appendChild(linkDiv);
+						} else {
+							document.body.appendChild(linkDiv);
+						}
+					});
+					counter++;
+				}
+			});
+			if(isAutomatic5){
+				// Inform user
+				console.warn("Cydog made your browsing more private with de-identification techniques.");
+			}
+			if(isAutomatic6){
+				// Inform user
+				console.warn("Cydog made your browsing more secure with malicious domain checking.");
+			}
+		};
+	}
 	// Automatically enable our deterrent encryptor checker
 	var deterrentEncryptorCheck;
 	async function checkForDeterrence(){
-		deterrentEncryptorCheck = document.body.innerText; 
-		try {
-			const deJSON = JSON.parse(deterrentEncryptorCheck);
-			if(!deJSON){
-				console.warn("Cydog determined this page is not part of deterrent encryptor program.");
-			} else {
-				const decryptedHtml = await decryptHtml(deterrentEncryptorCheck, "");
-				if(decryptedHtml !== null){
-					const htmlRegex = /<\/?[a-z][\s\S]*>/i;
-					const isHtml = htmlRegex.test(decryptedHtml);
-					if(isHtml){
-						document.open();
-						document.write(decryptedHtml);
-						document.close();
+		if(document.body){
+			deterrentEncryptorCheck = document.body.innerText; 
+			try {
+				const deJSON = JSON.parse(deterrentEncryptorCheck);
+				if(!deJSON){
+					console.warn("Cydog determined this page is not part of deterrent encryptor program.");
+				} else {
+					const decryptedHtml = await decryptHtml(deterrentEncryptorCheck, "");
+					if(decryptedHtml !== null){
+						const htmlRegex = /<\/?[a-z][\s\S]*>/i;
+						const isHtml = htmlRegex.test(decryptedHtml);
+						if(isHtml){
+							renderDeterrenceHTML(decryptedHtml);
+						} else {
+							createPasswordModal("");
+						}
 					} else {
 						createPasswordModal("");
 					}
-				} else {
-					createPasswordModal("");
 				}
+			} catch (e) {
+				console.warn("Cydog determined this page is not part of deterrent encryptor program.");
 			}
-		} catch (e) {
-			console.warn("Cydog determined this page is not part of deterrent encryptor program.");
 		}
 	}
 	async function decryptHtml(encryptedData, password) {
@@ -917,12 +1067,11 @@ chrome.storage.local.get((item) => {
 			const htmlRegex = /<\/?[a-z][\s\S]*>/i;
 			const isHtml = htmlRegex.test(decryptedHtml);
 			if(isHtml){
-				document.open();
-				document.write(decryptedHtml);
-				document.close();
+				renderDeterrenceHTML(decryptedHtml);
 			} else {
 				document.body.removeChild(overlay);
 				createPasswordModal("There was an error.");
+				showToast("Password incorrect!");
 			}
 		});
 		modal.appendChild(closeBtn);
@@ -944,4 +1093,68 @@ chrome.storage.local.get((item) => {
 			return kbSize;
 		}
 	}
+	function renderDeterrenceHTML(html){
+		document.open();
+		document.write(`
+			<!DOCTYPE html>
+			<html>
+			<head>
+				<style>
+					body {
+						width:100vw;
+						height: 100vh;
+						margin: 0;
+						overflow: hidden;
+					}
+					#cydog-deterrence-encryptor {
+						width: 100vw;
+						height: 100vh;
+						display: flex;
+						flex-direction: column;
+						border: none;
+					}
+				</style>
+				<body>
+					<iframe id="cydog-deterrence-encryptor"></iframe>
+				</body>
+			</html>`);
+		document.close();
+		const cydogDeterrenceEncryptor = document.getElementById('cydog-deterrence-encryptor');
+		cydogDeterrenceEncryptor.srcdoc = html;
+	}
+	function showToast(message) {
+		const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+		var bgColor = "#fff";
+		var fontHexColor = "#000";
+		if (prefersDarkScheme.matches) {
+			bgColor = "#0a192f";
+			fontHexColor = "#fff";
+		}
+        const toast = document.createElement('div');
+        toast.textContent = message;
+		toast.style.fontFamily = '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
+        toast.style.position = 'fixed';
+        toast.style.bottom = '20px';
+        toast.style.left = '50%';
+        toast.style.transform = 'translateX(-50%)';
+        toast.style.backgroundColor = `${bgColor}`;
+        toast.style.color = `${fontHexColor}`;
+        toast.style.padding = '10px 20px';
+        toast.style.borderRadius = '5px';
+        toast.style.zIndex = '1000';
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.5s ease-in-out';
+        toast.style.fontSize = '16px';
+        toast.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.2)';
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '1';
+        }, 100);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => {
+                toast.remove();
+            }, 500);
+        }, 3000);
+    }
 })

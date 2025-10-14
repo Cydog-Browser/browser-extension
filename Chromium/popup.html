@@ -11,7 +11,8 @@
     <div class="container">
         <header>
             <img src="logo.png">
-            <h1>Cydog Toolkit</h1>
+            <h1 id="about-us">Cydog Toolkit</h1>
+            <div id="fingerprint">Fingerprint-</div>
         </header>
         
         <div class="tabs">
@@ -23,7 +24,7 @@
         <div class="tab-content active" id="general">
             <h2 class="section-title">Security Settings</h2>
             <div class="toggle-container">
-                <div class="toggle-item">
+                <div id="https-secure-only" class="toggle-item">
                     <label class="toggle-label">
                         <span class="toggle-icon"><i class="fa-solid fa-lock"></i></span>
                         <div class="toggle-text">
@@ -37,7 +38,7 @@
                     </label>
                 </div>
                 
-                <div class="toggle-item">
+                <div id="ultra-security-browsing" class="toggle-item">
                     <label class="toggle-label">
                         <span class="toggle-icon"><i class="fa-solid fa-shield-dog"></i></span>
                         <div class="toggle-text">
@@ -50,6 +51,30 @@
                         </span>
                     </label>
                 </div>
+
+                <div id="domain-checker" class="toggle-item">
+                    <label class="toggle-label">
+                        <span class="toggle-icon"><i class="fa-solid fa-link"></i></span>
+                        <div class="toggle-text">
+                            <h3>Domain Check</h3>
+                            <p>Enable domain checker</p>
+                        </div>
+                        <span class="toggle-switch">
+                            <input type="checkbox"id="automatic-toggle6">
+                            <span class="slider"></span>
+                        </span>
+                    </label>
+                </div>
+
+                <a id="deterrent-program" href="https://cydogbrowser.com/cydettest.php" target="_blank" class="toggle-item">
+                    <label class="toggle-label">
+                        <span class="toggle-icon"><i class="fa-solid fa-road-barrier"></i></span>
+                        <div class="toggle-text">
+                            <h3>Deterrent Program</h3>
+                            <p>Check it out (password is test)</p>
+                        </div>
+                    </label>
+                </a>
                 
             </div>
         </div>
@@ -57,7 +82,7 @@
         <div class="tab-content" id="privacy">
             <h2 class="section-title">Privacy Settings</h2>
             <div class="toggle-container">
-                <div class="toggle-item">
+                <div id="block-web-gl" class="toggle-item">
                     <label class="toggle-label">
                         <span class="toggle-icon"><i class="fa-solid fa-cube"></i></span>
                         <div class="toggle-text">
@@ -71,7 +96,7 @@
                     </label>
                 </div>
                 
-                <div class="toggle-item">
+                <div id="block-web-beacons" class="toggle-item">
                     <label class="toggle-label">
                         <span class="toggle-icon"><i class="fa-solid fa-satellite-dish"></i></span>
                         <div class="toggle-text">
@@ -85,20 +110,19 @@
                     </label>
                 </div>
 
-                <!--TODO - Add more privacy features -->
-                <!--<div class="toggle-item">
+                <div id="inhibit-identification" class="toggle-item">
                     <label class="toggle-label">
-                        <span class="toggle-icon"><i class="fa-solid fa-satellite-dish"></i></span>
+                        <span class="toggle-icon"><i class="fa-solid fa-fingerprint"></i></span>
                         <div class="toggle-text">
-                            <h3></h3>
-                            <p></p>
+                            <h3>Inhibit Identification</h3>
+                            <p>Make fingerprinting harder</p>
                         </div>
                         <span class="toggle-switch">
                             <input type="checkbox"id="automatic-toggle5">
                             <span class="slider"></span>
                         </span>
                     </label>
-                </div>-->
+                </div>
                 
             </div>
         </div>
@@ -111,7 +135,7 @@
         </div>-->
         
         <footer>
-            <p>Cydog Browser Extension v1.1.6</p>
+            <p>Cydog Browser Extension v1.1.8</p>
         </footer>
     </div>
     <script src="popup.js"></script>
