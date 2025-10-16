@@ -9,12 +9,12 @@ window.addEventListener("DOMContentLoaded", (event) => {
         const automaticToggle = document.getElementById("automatic-toggle");
         createModal("Our HTTPSecure setting upgrades insecure web links you are navigating to so you can ensure you only visit pages following secure web standards.", document.getElementById('https-secure-only'));
         const automaticToggle2 = document.getElementById("automatic-toggle2");
-        createModal("Our Ultra Security browsing mode injects page security meta tags and includes standards that were never adopted by mainstream companies to secure your web experience. It also use cycache.js as a backbone to identify web pages that are not secure because they do not following best practices, serving them as a cache where possible. Pages served this way will recieve a take-over and you'll see our logo.", document.getElementById('ultra-security-browsing'));
+        createModal("Our Ultra Security browsing mode injects page security meta tags and includes standards that were never adopted by mainstream companies to secure your web experience. It also uses cycache.js as a backbone to identify web pages that are not secure because they do not follow best practices, serving them as a cache where possible. Pages served this way will recieve a take-over and you'll see our logo.", document.getElementById('ultra-security-browsing'));
         const automaticToggle3 = document.getElementById("automatic-toggle3");
         createModal("Our domain checker program gives users real-time, updated feedback on the security of pages they visit without phone-home application layers.", document.getElementById('domain-checker'));
         createModal("Our deterrence program allows web developers to create encrypted web pages that can only be decrypted by our browser extension. Click on the button to check it out!", document.getElementById('deterrent-program'));
         const automaticToggle4 = document.getElementById("automatic-toggle4");
-        createModal("Some privacy technologies enable secure interactions by preventing insecure contexts. Our block WebGL feature secures the pages you visit by blocking JavaScript rendering of WebGL. This will not break WebGL, as most WebGL applications are delivered via a pre-packaged sandboxed on websites.", document.getElementById('block-web-gl'));
+        createModal("Some privacy technologies enable secure interactions by preventing insecure contexts. Our block WebGL feature secures the pages you visit by blocking JavaScript rendering of WebGL. This will not break WebGL, as most WebGL applications are delivered via a pre-packaged sandbox on websites.", document.getElementById('block-web-gl'));
         const automaticToggle5 = document.getElementById("automatic-toggle5");
         createModal("Web beacons are a security issue that compromises secure privacy. A web beacon can be used to track you but it will actually be used to gather an IP Address to deliver real-time inauthentic content to a user via a Man in the Middle (MitM) attack.", document.getElementById('block-web-beacons'));
         const automaticToggle6 = document.getElementById("automatic-toggle6");
@@ -141,7 +141,39 @@ window.addEventListener("DOMContentLoaded", (event) => {
                 document.getElementById(tabId).classList.add('active');
             });
         });
-        
+
+        // Set ntfy functionality
+        const ntfy = document.getElementById("ntfy");
+        const ntfyInput = document.getElementById("ntfy-input");
+        const ntfyInput2 = document.getElementById("ntfy-input2");
+        const ntfyStatus = document.getElementById("ntfy-status");
+        const ntfyActual = item.ntfy;
+        const ntfyActualTopic = item.ntfytopic;
+        if(ntfyActual && ntfyActualTopic){
+            ntfyInput.value = ntfyActual;
+            ntfyInput2.value = ntfyActualTopic;
+            ntfyStatus.innerHTML = "Ready to send notifications.";
+        }
+        ntfy.addEventListener('submit', function(event) {
+            event.preventDefault();
+            ntfyStatus.innerHTML = "Adding new parameters.";
+            const ntfyInputValue = ntfyInput.value;
+            const ntfyInputValue2 = ntfyInput2.value;
+            if(ntfyInput !=="" && ntfyInput2 !==""){
+                chrome.storage.local.set({ ntfy: `${ntfyInputValue}`, ntfytopic: `${ntfyInputValue2}` })
+                .then(() => {
+                    console.log("Cydog stored your NTFY link.");
+                    ntfyStatus.innerHTML = "Ready to send notifications.";
+                })
+                .catch((error) => {
+                    console.error("Cydog failed to store your NTFY link:", error);
+                    ntfyStatus.innerHTML = "Could not save web link.";
+                });
+            } else {
+                ntfyStatus.innerHTML = "Values cannot be empty.";
+            }
+        });
+
     });
     function createModal(message, element){
         const modal = document.createElement("div");

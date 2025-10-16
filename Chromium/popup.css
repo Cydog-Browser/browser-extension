@@ -162,6 +162,27 @@ h3 {
     line-height: 1.4;
 }
 
+.toggle-text form input {
+    padding: 8px;
+    border: none;
+    text-decoration: none;
+    background-color: #fff;
+    border-radius: 5px;
+    width: 100%;
+    margin-top: 10px;
+    max-width: 500px;
+}
+
+.toggle-text form button {
+    padding: 8px;
+    background-color: #007bff;
+    text-transform: uppercase;
+    color: #fff;
+    border: none;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
 .toggle-switch {
     position: relative;
     display: inline-block;

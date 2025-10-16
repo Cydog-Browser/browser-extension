@@ -18,7 +18,7 @@
         <div class="tabs">
             <button class="tab-btn active" data-tab="general">Security</button>
             <button class="tab-btn" data-tab="privacy">Privacy</button>
-            <!--<button class="tab-btn" data-tab="notifications">Notifications</button>-->
+            <button class="tab-btn" data-tab="notifications">Notifications</button>
         </div>
         
         <div class="tab-content active" id="general">
@@ -127,15 +127,29 @@
             </div>
         </div>
         
-        <!--TODO - Add notifications -->
-        <!--<div class="tab-content" id="notifications">
+        <div class="tab-content" id="notifications">
             <h2 class="section-title"><i class="fas fa-bell"></i> Notification Settings</h2>
             <div class="toggle-container">
+                <div id="block-web-gl" class="toggle-item">
+                    <label class="toggle-label">
+                        <span class="toggle-icon"><i class="fa-solid fa-envelope-open-text"></i></span>
+                        <div class="toggle-text">
+                            <h3>NTFY Notifications</h3>
+                            <p>This notification will send users a NTFY when a Cydog deterrent encryptor page is logged into using this browser and extension. Due to limitations, a NTFY web link must be formatted in https in order to work. This usually requires self-hosted installations of NTFY to use an HTTPS proxy. We hope to add NTFY support for HTTPS out of the box soon.</p>
+                            <form id="ntfy">
+                                <input id="ntfy-input" type="text" placeholder="Add NTFY web link here...">
+                                <input id="ntfy-input2" type="text" placeholder="Add NTFY topic here..">
+                                <button type="submit">Add</button>
+                            </form>
+                            <p id="ntfy-status">? Unknown</p>
+                        </div>
+                    </label>
+                </div>
             </div>
-        </div>-->
+        </div>
         
         <footer>
-            <p>Cydog Browser Extension v1.1.8</p>
+            <p>Cydog Browser Extension v1.1.9</p>
         </footer>
     </div>
     <script src="popup.js"></script>

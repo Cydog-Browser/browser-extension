@@ -17,6 +17,8 @@ chrome.storage.local.get((item) => {
 	var automaticObj4 = item.automaticObj4;
 	var automaticObj5 = item.automaticObj5;
 	var automaticObj6 = item.automaticObj6;
+	const ntfyActual = item.ntfy;
+	const ntfyActualTopic = item.ntfytopic;
 
     if (automaticObj == undefined) {
         isAutomatic = true;
@@ -54,20 +56,21 @@ chrome.storage.local.get((item) => {
         isAutomatic6 = automaticObj6.isAutomatic6;
     }
 
-	// Check if in deterrent encryptor program
-	checkForDeterrence();
-
-	new Fingerprint2().get(function(result, components){
-		if(item.fingerprint !== result){
-			showToast("Fingerprint changed.");
-		}
-		fingerprintActual = result;
-		chrome.storage.local.set({'fingerprint': fingerprintActual}, function() {
-			if (chrome.runtime.lastError) {
-			  console.error("Cydog failed to calculate your fingerprint:", chrome.runtime.lastError.message);
-			} else {
-			  console.warn('Cydog calculated your fingerprint.');
+	// Check if in deterrent encryptor program && then check/get fingerprint 
+	window.addEventListener("load", function() {
+		checkForDeterrence();
+		new Fingerprint2().get(function(result, components){
+			if(item.fingerprint !== result){
+				showToast("Fingerprint changed.");
 			}
+			fingerprintActual = result;
+			chrome.storage.local.set({'fingerprint': fingerprintActual}, function() {
+				if (chrome.runtime.lastError) {
+				console.error("Cydog failed to calculate your fingerprint:", chrome.runtime.lastError.message);
+				} else {
+				console.warn('Cydog calculated your fingerprint.');
+				}
+			});
 		});
 	});
     
@@ -279,34 +282,21 @@ chrome.storage.local.get((item) => {
 			}
 		}
 
-		async function refreshCachedPage() {
-			try {
-				const url = window.location.href;
-				const transaction = db_ext_cache.transaction(STORE_NAME_EXT_CACHE, 'readonly');
-				const store = transaction.objectStore(STORE_NAME_EXT_CACHE);
-				const deleteRequest = store.delete(url);
-
-				deleteRequest.onsuccess = function() {
-					window.location.reload();
-				};
-
-				deleteRequest.onerror = function(event) {
-					console.error('Cydog cache deletion error:', event.target.errorCode);
-				};
-				
-			} catch (error) {
-				console.error('Cydog cache deletion error:', error);
-			}
-		}
-
 		// Check cache
 		checkCSPBeforeRender();
 		async function checkCSPBeforeRender(){
 			try {
+				const shouldCache = localStorage.getItem('cydog-cache');
+				if (shouldCache) {
+					if(shouldCache === "false"){
+						return;
+					}
+				}
 				const response = await fetch(window.location.href);
 				const csp = response.headers.get('Content-Security-Policy');
+				const xFrameOptions = response.headers.get('X-Frame-Options');
 				//console.warn(`Cydog found headers of ${csp}`);
-				if(csp === null || window.location.href.includes('duckduckgo.com')) {
+				if(csp === null && xFrameOptions === null || window.location.href.includes('duckduckgo.com')) {
 					renderCache();
 				}
 			  } catch (error) {
@@ -615,6 +605,7 @@ chrome.storage.local.get((item) => {
 															const deleteRequest = store.delete(url);
 
 															deleteRequest.onsuccess = function() {
+																localStorage.setItem('cydog-cache', 'false');
 																window.location.reload();
 															};
 
@@ -647,6 +638,15 @@ chrome.storage.local.get((item) => {
 					document.close();
 					const cydogCache = document.getElementById('cydog-cache');
 					cydogCache.srcdoc = doc.documentElement.outerHTML;
+					cydogCache.addEventListener('load', () => {
+						try {
+							if (iframe.contentWindow.document) {
+								return;
+							}
+						} catch (e) {
+							console.warn("Cydog found some errors loading this cache.");
+						}
+					});
 					//const iframeDocument = cydogCache.contentWindow.document;
 					//iframeDocument.open();
 					//iframeDocument.write(doc.documentElement.outerHTML);
@@ -698,28 +698,40 @@ chrome.storage.local.get((item) => {
             /doubleclick\.net/i
         ];
 
-        let blockedCounter = 0;
-        const blockedLog = document.getElementById('blockedLog');
-        const blockedCountElement = document.getElementById('blockedCount');
-
-        // Intercept resource loading
-        document.addEventListener('beforeload', function(e) {
-            const url = e.url || e.target.src;
-            
-            if (!url) return;
-            
-            // Check against tracker patterns
-            const isTracker = TRACKER_PATTERNS.some(pattern => 
-                pattern.test(url)
-            );
-            
-            // Block and log if tracker detected
-            if (isTracker) {
-                e.preventDefault();
-                console.warn(`Cydog blocked pixel tracker: ${url}`);
-            }
-        }, true);
-
+        // Intercept resource loading without beforeunload
+		const allElements = document.querySelectorAll('*');
+		allElements.forEach(element => {
+			if(element.tagName === 'IMG'){
+				if (element.src) {
+					const isTracker = TRACKER_PATTERNS.some(pattern => 
+						pattern.test(element.src)
+					);
+					// Block and log if tracker detected
+					if (isTracker) {
+						element.removeAttribute('src');
+						console.warn(`Cydog blocked pixel tracker: ${element.src}`);
+					}
+				}
+			} else {
+				const computedStyle = window.getComputedStyle(element);
+				const backgroundImage = computedStyle.backgroundImage;
+				// Check if the element has a background image and extract the URL
+				if (backgroundImage && backgroundImage !== 'none') {
+					const urlMatch = backgroundImage.match(/url\(['"]?(.*?)['"]?\)/);
+					if (urlMatch && urlMatch[1]) {
+						const isTracker = TRACKER_PATTERNS.some(pattern => 
+							pattern.test(urlMatch || urlMatch[1])
+						);
+						// Block and log if tracker detected
+						if (isTracker) {
+							element.style.backgroundImage = 'none';
+							console.warn(`Cydog blocked pixel tracker: ${element.src}`);
+						}
+					}
+				}
+			}
+		});
+		
         // Inform user
 		console.warn("Cydog made your browsing more private with beacon blocking.");
 	}
@@ -828,16 +840,20 @@ chrome.storage.local.get((item) => {
 								`;
 							}
 							function renderWarning(domain){
-								return `
-									<p>⚠ Warning a partial match was listed on <a href="https://github.com/romainmarcoux/malicious-domains" target="_blank">romainmarcoux's malicious list</a>.</p>
-									<p>You should be careful when visiting pages like this one, as versions of this domain are being actively attacked in the wild.</p>
-									<p>Here are some variants to be on the lookout for:</p>
-										<ul style="margin-bottom:20px;list-style:none;">
-											<li>-${domain}</li>
-											<li>.[blended text]-${domain}</li>
-											<li>[blended text].[more blended text]-${domain}</li>
-										</ul>
-								`;
+								if(domain !== "" && domain != null){
+									return `
+										<p>⚠ Warning a partial match was listed on <a href="https://github.com/romainmarcoux/malicious-domains" target="_blank">romainmarcoux's malicious list</a>.</p>
+										<p>You should be careful when visiting pages like this one, as versions of this domain are being actively attacked in the wild.</p>
+										<p>Here are some variants to be on the lookout for:</p>
+											<ul style="margin-bottom:20px;list-style:none;">
+												<li>-${domain}</li>
+												<li>.[blended text]-${domain}</li>
+												<li>[blended text].[more blended text]-${domain}</li>
+											</ul>
+									`;
+								} else {
+									return `<p>⚠ Warning there is something suspicious about this page.</p>`;
+								}
 							}
 							document.body.appendChild(linkDiv);
 						} else {
@@ -856,6 +872,25 @@ chrome.storage.local.get((item) => {
 				console.warn("Cydog made your browsing more secure with malicious domain checking.");
 			}
 		};
+		prettifyPages();
+	}
+	// Conduct Prettification
+	function prettifyPages(){
+		document.addEventListener('DOMContentLoaded', () => {
+			const images = document.querySelectorAll('img');
+			images.forEach(image => {
+				image.addEventListener('error', function() {
+					const parentContainer = this.parentNode;
+					if (parentContainer) {
+						parentContainer.remove();
+						console.warn('Cydog prettified this page.');
+					} else {
+						this.remove();
+						console.warn('Cydog prettified this page.');
+					}
+				});
+			});
+		});
 	}
 	// Automatically enable our deterrent encryptor checker
 	var deterrentEncryptorCheck;
@@ -874,16 +909,37 @@ chrome.storage.local.get((item) => {
 						if(isHtml){
 							renderDeterrenceHTML(decryptedHtml);
 						} else {
-							createPasswordModal("");
+							getPasswordForUser();
 						}
 					} else {
-						createPasswordModal("");
+						getPasswordForUser();
 					}
 				}
 			} catch (e) {
 				console.warn("Cydog determined this page is not part of deterrent encryptor program.");
 			}
 		}
+	}
+	async function getPasswordForUser(){
+		chrome.runtime.sendMessage({
+				action: 'getPassword',
+				data: {
+					url: window.location.href
+				}
+		}, (response) => {
+				if (chrome.runtime.lastError) {
+					console.error("Cydog could not get password.", chrome.runtime.lastError.message);
+				} else {
+					if(response.password !== ""){
+						console.warn("Cydog received a password, attempting to autofill now.");
+						createPasswordModal("Added saved password.");
+						const deterrencePW = document.getElementById("deterrence-pw");
+						deterrencePW.value = response.password;
+					} else {
+						createPasswordModal("");
+					}
+				}
+		});
 	}
 	async function decryptHtml(encryptedData, password) {
 		// Extract salt, iv, tag, and ciphertext
@@ -1022,8 +1078,10 @@ chrome.storage.local.get((item) => {
 		title.style.marginBottom = '20px';
 		// Create password input
 		const passwordInput = document.createElement('input');
+		passwordInput.id = 'deterrence-pw';
 		passwordInput.type = 'password';
 		passwordInput.placeholder = 'Password';
+		passwordInput.autocomplete = "new-password"
 		passwordInput.style.cssText = `
 			width: calc(100% - 20px);
 			padding: 10px;
@@ -1067,11 +1125,43 @@ chrome.storage.local.get((item) => {
 			const htmlRegex = /<\/?[a-z][\s\S]*>/i;
 			const isHtml = htmlRegex.test(decryptedHtml);
 			if(isHtml){
-				renderDeterrenceHTML(decryptedHtml);
+				chrome.runtime.sendMessage({
+						action: 'savePassword',
+						data: {
+							url: window.location.href,
+							password: password
+						}
+				}, (response) => {
+						if (chrome.runtime.lastError) {
+							console.error("Cydog could not save this password.", chrome.runtime.lastError.message);
+						} else {
+							console.warn("Cydog sent this password to be saved.");
+							if(response.status === "success"){
+								console.warn("Cydog saved this password.");
+							}
+							renderDeterrenceHTML(decryptedHtml);
+						}
+				});
 			} else {
 				document.body.removeChild(overlay);
 				createPasswordModal("There was an error.");
 				showToast("Password incorrect!");
+				removePasswordForUser();
+				if(ntfyActual && ntfyActualTopic){
+					const today = new Date();
+					const month = today.getMonth() + 1;
+					const day = today.getDate();
+					const year = today.getFullYear();
+					const formattedDate = `${month}/${day}/${year}`; 
+					sendNTFYNotification(
+						`${ntfyActualTopic}`,
+						`Someone tried to log in to ${window.location.href} at ${formattedDate}`,
+						'Security Alert',
+						5,
+						['alert', 'security'],
+						''
+					);
+				}
 			}
 		});
 		modal.appendChild(closeBtn);
@@ -1091,6 +1181,47 @@ chrome.storage.local.get((item) => {
 			const byteSize = byteArray.length;
 			const kbSize = byteSize / 1024;
 			return kbSize;
+		}
+	}
+	async function removePasswordForUser(){
+		chrome.runtime.sendMessage({
+				action: 'removePassword',
+				data: {
+					url: window.location.href
+				}
+		}, (response) => {
+				if (chrome.runtime.lastError) {
+					console.error("Cydog could not remove password.", chrome.runtime.lastError.message);
+				} else {
+					if(response.status === "success"){
+						console.warn("Cydog removed password.");
+					} else {
+						console.warn("Cydog failed to remove password.");
+					}
+				}
+		});
+	}
+	async function sendNTFYNotification(topic, message, title = '', priority = 3, tags = [], clickUrl = '') {
+		const ntfyUrl = `${ntfyActual}/${topic}`;
+		const headers = {
+			'Content-Type': 'text/plain',
+			'Title': title,
+			'Priority': priority.toString(),
+			'Tags': tags.join(','),
+		};
+		if (clickUrl) {
+			headers['Click'] = clickUrl;
+		}
+		try {
+			const response = await fetch(ntfyUrl, {
+				base: `${ntfyActual}/`,
+				mode: 'no-cors',
+				method: 'POST',
+				headers: headers,
+				body: message,
+			});
+		} catch (error) {
+			console.error('Cydog failed sending NTFY notification:', error);
 		}
 	}
 	function renderDeterrenceHTML(html){
